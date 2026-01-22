@@ -30,10 +30,31 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 # Copy configuration templates and scripts
 COPY nginx.conf.template /etc/nginx/templates/nginx.conf.template
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh && sed -i 's/\r$//' /usr/local/bin/entrypoint.sh
 
 # Setup Supervisor configuration
-RUN echo $'[supervisord]\nnodaemon=true\nuser=root\n\n[program:nginx]\ncommand=nginx -g "daemon off;"\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0\n\n[program:tor]\ncommand=tor -f /etc/tor/torrc\nuser=debian-tor\nautostart=true\nautorestart=true\nstdout_logfile=/dev/stdout\nstdout_logfile_maxbytes=0\nstderr_logfile=/dev/stderr\nstderr_logfile_maxbytes=0' > /etc/supervisord.conf
+RUN echo "[supervisord]" > /etc/supervisord.conf && \
+    echo "nodaemon=true" >> /etc/supervisord.conf && \
+    echo "user=root" >> /etc/supervisord.conf && \
+    echo "" >> /etc/supervisord.conf && \
+    echo "[program:nginx]" >> /etc/supervisord.conf && \
+    echo "command=nginx -g \"daemon off;\"" >> /etc/supervisord.conf && \
+    echo "autostart=true" >> /etc/supervisord.conf && \
+    echo "autorestart=true" >> /etc/supervisord.conf && \
+    echo "stdout_logfile=/dev/stdout" >> /etc/supervisord.conf && \
+    echo "stdout_logfile_maxbytes=0" >> /etc/supervisord.conf && \
+    echo "stderr_logfile=/dev/stderr" >> /etc/supervisord.conf && \
+    echo "stderr_logfile_maxbytes=0" >> /etc/supervisord.conf && \
+    echo "" >> /etc/supervisord.conf && \
+    echo "[program:tor]" >> /etc/supervisord.conf && \
+    echo "command=tor -f /etc/tor/torrc" >> /etc/supervisord.conf && \
+    echo "user=debian-tor" >> /etc/supervisord.conf && \
+    echo "autostart=true" >> /etc/supervisord.conf && \
+    echo "autorestart=true" >> /etc/supervisord.conf && \
+    echo "stdout_logfile=/dev/stdout" >> /etc/supervisord.conf && \
+    echo "stdout_logfile_maxbytes=0" >> /etc/supervisord.conf && \
+    echo "stderr_logfile=/dev/stderr" >> /etc/supervisord.conf && \
+    echo "stderr_logfile_maxbytes=0" >> /etc/supervisord.conf
 
 # Default ENV variables
 ENV FORWARD_DEST="http://host.docker.internal:8080"

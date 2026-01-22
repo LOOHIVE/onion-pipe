@@ -1,17 +1,17 @@
-# <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/torbrowser.svg" height="32"> Sapphive Onion-Pipe
+# <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/torbrowser.svg" height="32"> Sapphive Onion-Pipe Client
 
 ![Docker Pulls](https://img.shields.io/docker/pulls/sapphive/onion-pipe) ![License](https://img.shields.io/badge/license-MIT-green) ![Security](https://img.shields.io/badge/security-hardened-orange)
 
-## 🚀 The Solution
-**Onion-Pipe** is a zero-config, anonymous webhook gateway. It allows developers to receive webhooks from services like GitHub, Stripe, or Shopify directly on their local machine or a private server—**even if it is behind a restrictive firewall or CGNAT.**
+## 🚀 Overview
+**Onion-Pipe** is a secure, anonymous webhook client. It allows you to receive traffic on your local machine via the Tor network without any open ports or complex firewall configurations. It is the perfect tool for developers testing multi-service webhooks in a zero-trust environment.
 
-By using Tor Hidden Services, Onion-Pipe provides a permanent `.onion` entry point that securely tunnels traffic to any local port without requiring port forwarding, static IPs, or exposing your host to the public clear-net.
+By using the Sapphive Relay Network, you get a persistent, encrypted gateway that is identity-verified via GitHub.
 
 ---
 
-## 🛠️ Rapid Deployment (Docker Compose)
+## 🛠️ Rapid Setup (Docker Compose)
 
-Expose your local service (running on port 8080) to the darknet in seconds:
+Establish your secure tunnel in seconds:
 
 ```yaml
 services:
@@ -20,7 +20,6 @@ services:
     container_name: webhook-gateway
     environment:
       - FORWARD_DEST=http://host.docker.internal:8080
-      - LISTEN_PORT=80
     volumes:
       - ./onion_keys:/var/lib/tor/hidden_service
     extra_hosts:
@@ -30,44 +29,38 @@ services:
 
 ---
 
-## 💎 Features & Comparison
+## 💎 Features & Advantages
 
-| Feature | Ngrok / Cloudflare | **Sapphive Onion-Pipe** |
+| Feature | Ngrok / Alternatives | **Sapphive Onion-Pipe** |
 | :--- | :--- | :--- |
-| **Cost** | Paid Tiers for Static URLs | **100% Free Forever** |
-| **Anonymity** | Centralized Logging | **Zero-Knowledge (Tor-based)** |
-| **Setup** | Requires Auth Tokens | **Plug & Play** |
-| **Limits** | Bandwidth/Connection Caps | **Unlimited** |
-| **Exposure** | Publicly Indexed | **Darknet-Only (Optional Security)** |
+| **Authentication** | Shared Tokens | **Personal GitHub Identity** |
+| **Privacy** | Centralized Snooping | **Zero-Knowledge Architecture** |
+| **Persistence** | Random URLs (Free tier) | **Permanent .onion Addresses** |
+| **Security** | Public Exposure | **End-to-End X25519 Encryption** |
 
 ---
 
-## 🎯 Use Cases
-
-### 1. **Testing Webhooks Locally**
-Hook up Stripe or GitHub to your local dev environment. Since the `.onion` address is cryptographic and persistent (if you mount the `onion_keys` volume), you never have to re-configure your webhook URL in the provider's dashboard.
-
-### 2. **Private API Gateways**
-Provide an API entry point for your IoT devices or remote workers that doesn't show up on search engines like Shodan.
-
-### 3. **Firewall Bypassing**
-Receive data on a server inside a corporate network or home lab where you don't have access to the router settings.
+## 🎯 How It Works
+1.  **Dashboard Login:** Sign in at [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) to get your API Key.
+2.  **CLI Registration:** Use the `onion-pipe` CLI to register your new `.onion` address.
+3.  **Tunnel Active:** Start this container locally. Any traffic sent to the public relay will be encrypted and delivered directly to your localhost.
 
 ---
 
-## ⚙️ Performance & Security
-1.  **E2E Encryption:** Every request is encrypted twice—once by Nginx (Self-signed SSL) and once by the Tor circuit.
-2.  **Privacy:** Your real IP address is never revealed to the webhook provider.
-3.  **Persistence:** Your URL stays the same as long as you keep the `./onion_keys` folder.
+## ⚙️ Performance & Persistence
+- **Address Persistence:** Mount the `/var/lib/tor/hidden_service` volume to keep your `.onion` address forever.
+- **Circuit Security:** All data is encrypted with YOUR local public key before reaching the relay.
+- **Identity:** Manage all your hooks via your private GitHub-linked dashboard.
 
 ---
 
-## 🤝 Support
-Developed by the **SAPPHIVE Infrastructure Team**.
+## 🤝 Project Links
 *   **Repo:** [github.com/sapphive/onion-pipe](https://github.com/sapphive/onion-pipe)
-*   **Inquiries:** [support@sapphive.com](mailto:support@sapphive.com)
+*   **Relay Service:** [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com)
+*   **Support:** [support@sapphive.com](mailto:support@sapphive.com)
 
 ---
 
 ## ⚖️ Legal Disclaimer
-Tor is a trademark of The Tor Project, Inc. This project is a community-driven implementation managed by SAPPHIVE and is not an official product of The Tor Project. All logos and trademarks belong to their respective owners.
+This is open-source software provided by SAPPHIVE. Tor is a trademark of The Tor Project, Inc. All trademarks belong to their respective owners.
+

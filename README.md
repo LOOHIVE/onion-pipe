@@ -1,36 +1,48 @@
-# 🧅 Sapphive Onion-Pipe Client
+# <img src="https://raw.githubusercontent.com/SAPPHIVE/onion-pipe/main/src/assets/logo/logo.png" height="32"> Onion-Pipe Client (by Sapphive)
 
-**Onion-Pipe** is an anonymous tunnel client that pipes darknet traffic to your local services. It is designed to be the ultimate developer tool for testing and receiving webhooks securely in a zero-trust environment.
+**Onion-Pipe** is an open-source anonymous webhook system maintained by the Sapphive Infrastructure Team. It allows you to receive webhooks on your local machine via the Tor network without any open ports or complex firewall configurations. It is the perfect tool for developers testing multi-service webhooks in a zero-trust environment.
 
-## ⚡ Quick Start
+## ⚡ Setup Guide for Non-Developers
 
-### 1. Account Setup
-Before running the client, sign in at [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) to link your GitHub account and receive your **API Key**.
+### 1. Preparation
+1.  **Get an API Key**: Visit [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) and log in with GitHub.
+2.  **Install Docker**: Ensure Docker is running on your machine.
 
-### 2. Run the Service
-```bash
-docker run -d \
-  -e FORWARD_DEST="http://host.docker.internal:3000" \
-  -v $(pwd)/keys:/var/lib/tor/hidden_service \
-  --name onion-pipe \
-  sapphive/onion-pipe:latest
+### 2. Launch the Client
+1. **Initialize Keys**: Run the following in your project folder:
+   `docker run --rm -v $(pwd)/onion_keys:/keys sapphive/onion-pipe init`
+
+2. **Start Tunneling**: Save the following as `docker-compose.yml` and run `docker compose up -d`:
+
+```yaml
+services:
+  onion-pipe:
+    image: sapphive/onion-pipe:latest
+    environment:
+      - FORWARD_DEST="http://host.docker.internal:3000"
+      - API_TOKEN="your_api_token_here"
+    volumes:
+      - ./onion_keys:/var/lib/tor/hidden_service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 ```
 
-### 3. Get your Endpoint
-Check the logs to see your unique `.onion` address:
-```bash
-docker logs onion-pipe
-```
-
-### 4. Register mapping
-Register this `.onion` address to your account via the dashboard or CLI:
-```bash
-npm run cli register <your-hidden-service-id>
-```
+### 3. Link your Tunnel
+1.  **Find your Address**: Run `docker logs onion-pipe`. Look for a line saying `Your onion address is: xxxxxxxx.onion`.
+2.  **Register it**: Go to your Dashboard and click "Add Tunnel". Paste your `.onion` address.
+3.  **Test it**: Use the provided Public Webhook URL (visible on your dashboard) to start sending traffic!
 
 ---
 
-## 🛠️ Configuration
+## ⚙️ Advanced Configuration
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `FORWARD_DEST` | `http://host.docker.internal:8080` | Where the decrypted traffic is "piped" to. |
+| `LISTEN_PORT` | `80` | The port the client uses inside its own network. |
+
+## 🛡️ Why use this?
+When you use a standard relay, the relay owner can read your webhooks (GitHub tokens, private data, etc.). **Onion-Pipe** uses "sealed box" encryption. Only the client running on **your** computer has the key to see the data. The relay only sees random scrambled text.
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |

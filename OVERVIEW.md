@@ -12,7 +12,9 @@ By using the Onion-Pipe community relay network, you get a persistent, encrypted
 ## 🛠️ Rapid Setup (Docker Compose)
 
 Establish your secure tunnel in seconds. First, generate your keys:
-`docker run --rm -v $(pwd)/onion_keys:/keys sapphive/onion-pipe init`
+```bash
+docker run --rm -v $(pwd)/onion_keys:/keys sapphive/onion-pipe init
+```
 
 Then, use the following `docker-compose.yml`:
 

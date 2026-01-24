@@ -18,6 +18,54 @@ if [ "$1" == "init" ]; then
     exit 0
 fi
 
+# --- LOGIN MODE ---
+if [ "$1" == "login" ]; then
+    RELAY_URL=${RELAY_URL:-"https://onion-pipe.sapphive.com"}
+    echo ""
+    echo "🌐 Onion-Pipe CLI Login"
+    echo "------------------------"
+    echo "1. Open your browser and visit:"
+    echo "   $RELAY_URL/cli-auth"
+    echo ""
+    echo "2. Log in with your GitHub account."
+    echo "3. Enter the 6-digit code displayed on the screen below."
+    echo ""
+    echo -n "🔑 Enter Code: "
+    read -r AUTH_CODE
+
+    if [ -z "$AUTH_CODE" ]; then
+        echo "❌ Error: Code cannot be empty."
+        exit 1
+    fi
+
+    echo "🔄 Authenticating with relay..."
+    RESPONSE=$(curl -s -X POST "$RELAY_URL/auth/cli/exchange" \
+        -H "Content-Type: application/json" \
+        -d "{\"code\": \"$AUTH_CODE\"}")
+    
+    API_TOKEN=$(echo "$RESPONSE" | sed -n 's/.*"api_key":"\([^"]*\)".*/\1/p')
+
+    if [ -z "$API_TOKEN" ]; then
+        ERROR_MSG=$(echo "$RESPONSE" | sed -n 's/.*"error":"\([^"]*\)".*/\1/p')
+        echo "❌ Login Failed: ${ERROR_MSG:-"Invalid code or connection error"}"
+        exit 1
+    fi
+
+    echo "✅ Success! You are now authenticated."
+    echo ""
+    echo "🚀 To start your Onion-Pipe tunnel, run this command:"
+    echo "------------------------------------------------------"
+    echo "docker run -d --name onion-pipe \\"
+    echo "  -v ./registration:/registration \\"
+    echo "  -v ./onion_id:/var/lib/tor/hidden_service \\"
+    echo "  -e API_TOKEN=\"$API_TOKEN\" \\"
+    echo "  -e FORWARD_DEST=\"http://host.docker.internal:8080\" \\"
+    echo "  sapphive/onion-pipe"
+    echo "------------------------------------------------------"
+    echo ""
+    exit 0
+fi
+
 if [ "$1" == "register" ]; then
     echo "🔗 Manual Registration Triggered..."
     if [ -f "/var/lib/tor/hidden_service/hostname" ]; then

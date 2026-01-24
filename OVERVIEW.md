@@ -9,16 +9,24 @@ By using the Onion-Pipe community relay network, you get a persistent, encrypted
 
 ---
 
-## 🛠️ Rapid Setup (Docker Compose)
+## ⚡ Rapid Setup
 
-Establish your secure tunnel in seconds. First, generate your E2EE keys:
+### 1. Authorize via CLI (Recommended)
+Skip the manual tokens and authorize directly from your terminal:
+```bash
+docker run -it --rm sapphive/onion-pipe login
+```
+Follow the prompts to log in via GitHub. It will provide the final command to start your tunnel.
+
+### 2. Manual Setup (Alternative)
+First, generate your E2EE keys:
 ```bash
 docker run --rm -v ./registration:/registration sapphive/onion-pipe init
 ```
 
-### Option A: Single Command Deployment
+#### Option A: Single Command Deployment
 ```bash
-docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN_HERE" -e FORWARD_DEST="http://host.docker.internal:8080" sapphive/onion-pipe
+docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" sapphive/onion-pipe
 ```
 
 ### Option B: Docker Compose Deployment
@@ -64,15 +72,20 @@ Note: `FORWARD_DEST` should point to the local HTTP endpoint that will receive d
 ## 🛠️ Step-by-Step Setup
 
 ### Step 1: Link your Identity
-Sign in at [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) (or your own self-hosted Master) to get your **API Key**.
+Authorize your session using our professional CLI flow:
+```bash
+docker run -it --rm sapphive/onion-pipe login
+```
+*Alternatively, sign in at [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) to manage keys manually.*
 
 ### Step 2: Establish the Tunnel (Docker)
-1. **Initialize Keys**: Run once to setup your encryption identity:
+1. **Initialize Keys**: Run once to setup your encryption identity (only if you didn't use CLI login):
    ```bash
    docker run --rm -v ./registration:/registration sapphive/onion-pipe init
    ```
 
 2. **Start the Service**:
+You can use the command provided by `login` or this Docker Compose:
 ```yaml
 services:
   onion-pipe:

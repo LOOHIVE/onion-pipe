@@ -13,10 +13,15 @@
 
 1. **Initialize Keys**: Run once on your host machine to generate your E2EE keypair:
    ```bash
-   docker run --rm -v "$(pwd)/registration:/registration" sapphive/onion-pipe init
+   docker run --rm -v ./registration:/registration sapphive/onion-pipe init
    ```
 
-2. **Start Tunneling**: Save the following as `docker-compose.yml` and run `docker compose up -d`:
+2. **Option A: Quick Start (Single Command)**:
+   ```bash
+   docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN_HERE" -e FORWARD_DEST="http://host.docker.internal:3000" sapphive/onion-pipe
+   ```
+
+3. **Option B: Advanced setup (Docker Compose)**: Save the following as `docker-compose.yml` and run `docker compose up -d`:
 
 ```yaml
 services:

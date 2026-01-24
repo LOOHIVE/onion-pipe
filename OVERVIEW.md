@@ -13,10 +13,16 @@ By using the Onion-Pipe community relay network, you get a persistent, encrypted
 
 Establish your secure tunnel in seconds. First, generate your E2EE keys:
 ```bash
-docker run --rm -v "$(pwd)/registration:/registration" sapphive/onion-pipe init
+docker run --rm -v ./registration:/registration sapphive/onion-pipe init
 ```
 
-Then, use the following `docker-compose.yml`:
+### Option A: Single Command Deployment
+```bash
+docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN_HERE" -e FORWARD_DEST="http://host.docker.internal:8080" sapphive/onion-pipe
+```
+
+### Option B: Docker Compose Deployment
+Use the following `docker-compose.yml`:
 
 ```yaml
 services:
@@ -63,7 +69,7 @@ Sign in at [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) (or your o
 ### Step 2: Establish the Tunnel (Docker)
 1. **Initialize Keys**: Run once to setup your encryption identity:
    ```bash
-   docker run --rm -v "$(pwd)/registration:/registration" sapphive/onion-pipe init
+   docker run --rm -v ./registration:/registration sapphive/onion-pipe init
    ```
 
 2. **Start the Service**:

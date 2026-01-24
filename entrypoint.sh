@@ -111,9 +111,6 @@ if [ ! -z "$API_TOKEN" ]; then
         fi
     else
         echo "❌ FAILED: Public key (/registration/pub.key) not found."
-        echo "   Run the 'init' command first to generate your security keys."
-    fi
-fi
         echo "   Registration requires a public key for End-to-End Encryption."
         echo "   Please run 'init' command first to generate keys in your volume."
     fi

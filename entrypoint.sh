@@ -87,19 +87,21 @@ if [ "$1" == "register" ]; then
 
         if [ -f "$PUB_KEY_PATH" ] && [ ! -z "$API_TOKEN" ]; then
             PUB_KEY=$(cat "$PUB_KEY_PATH")
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$RELAY_URL/register" \
+            RESPONSE=$(curl -s -X POST "$RELAY_URL/register" \
                 -H "Content-Type: application/json" \
                 -d "{\"onion_service_id\": \"$SERVICE_ID\", \"token\": \"$API_TOKEN\", \"public_key\": \"$PUB_KEY\"}")
             
-        if [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ MANUAL REGISTRATION SUCCESSFUL!"
-            echo "   Public Endpoint: $RELAY_URL/v1/hook/<your-token>"
-            echo "   Check your dashboard for the exact URL."
-            exit 0
-        else
-            echo "❌ REGISTRATION FAILED ($HTTP_CODE)"
-            exit 1
-        fi
+            TOKEN=$(echo "$RESPONSE" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+
+            if [ ! -z "$TOKEN" ]; then
+                echo "✅ MANUAL REGISTRATION SUCCESSFUL!"
+                echo "   Public Endpoint: $RELAY_URL/h/$TOKEN"
+                echo "   Check your dashboard to manage this hook."
+                exit 0
+            else
+                echo "❌ REGISTRATION FAILED: $RESPONSE"
+                exit 1
+            fi
         else
             echo "❌ ERROR: Missing API_TOKEN or Public Key in /registration/ folder."
             exit 1
@@ -110,8 +112,8 @@ if [ "$1" == "register" ]; then
     fi
 fi
 
-# Ensure Tor data directory has correct permissions for debian-tor
-chown -R debian-tor:debian-tor /var/lib/tor
+# Ensure Tor data directory has correct permissions for tor user
+chown -R tor:tor /var/lib/tor
 chmod 700 /var/lib/tor
 chmod 700 /var/lib/tor/hidden_service
 
@@ -127,9 +129,9 @@ EOF
 # Process Nginx template
 envsubst '${FORWARD_DEST} ${LISTEN_PORT}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
 
-# Start Tor in background as debian-tor
+# Start Tor in background as tor user
 echo "🧅 Establishing Sapphive Onion-Pipe circuit..."
-su -s /bin/bash debian-tor -c "tor -f /etc/tor/torrc --RunAsDaemon 1"
+su -s /bin/bash tor -c "tor -f /etc/tor/torrc --RunAsDaemon 1"
 
 # Wait for hostname
 MAX_RETRIES=30
@@ -147,6 +149,9 @@ done
 ONION_ADDR=$(cat /var/lib/tor/hidden_service/hostname)
 SERVICE_ID=${ONION_ADDR%%.onion}
 
+# Setup permissions for the decrypter user
+chown -R node:node /registration 2>/dev/null || true
+
 # --- AUTOMATIC REGISTRATION ---
 RELAY_URL=${RELAY_URL:-"https://onion-pipe.sapphive.com"}
 
@@ -159,15 +164,20 @@ if [ ! -z "$API_TOKEN" ]; then
     if [ -f "$PUB_KEY_PATH" ]; then
         PUB_KEY=$(cat "$PUB_KEY_PATH")
         
-        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$RELAY_URL/register" \
+        RESPONSE=$(curl -s -X POST "$RELAY_URL/register" \
             -H "Content-Type: application/json" \
             -d "{\"onion_service_id\": \"$SERVICE_ID\", \"token\": \"$API_TOKEN\", \"public_key\": \"$PUB_KEY\"}")
         
-        if [ "$HTTP_CODE" -eq 200 ]; then
+        TOKEN=$(echo "$RESPONSE" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+
+        if [ ! -z "$TOKEN" ]; then
             echo "✅ SUCCESSFULLY REGISTERED with Relay!"
+            echo "   Public Endpoint: $RELAY_URL/h/$TOKEN"
             echo "   Manage your tunnel at: $RELAY_URL/dashboard"
+            REGISTERED_TOKEN=$TOKEN
         else
-            echo "❌ REGISTRATION REJECTED ($HTTP_CODE). Ensure your API_TOKEN is valid."
+            echo "❌ REGISTRATION REJECTED. Ensure your API_TOKEN is valid."
+            echo "   Response: $RESPONSE"
         fi
     else
         echo "❌ FAILED: Public key (/registration/pub.key) not found."
@@ -177,17 +187,64 @@ if [ ! -z "$API_TOKEN" ]; then
 else
     echo "ℹ️  No API_TOKEN provided. Skipping automatic registration."
 fi
+# Setup directories and permissions
+mkdir -p /registration
+chown -R node:node /registration 2>/dev/null || true
+
 # -----------------------------
 
 echo "***************************************************"
 echo "  🚀 SAPPHIVE ONION-PIPE IS ACTIVE"
+if [ ! -z "$REGISTERED_TOKEN" ]; then
+echo "  🔗 PUBLIC WEBHOOK: $RELAY_URL/h/$REGISTERED_TOKEN"
+fi
 echo "  📍 PUBLIC ONION: http://$ONION_ADDR"
 echo "  🔒 SECURE ONION: https://$ONION_ADDR"
 echo "  ➡️  FORWARDING TO: $FORWARD_DEST"
 echo "***************************************************"
 
-# Cleanup for Supervisor
-pkill tor
-sleep 1
+# Ensure no orphan Tor processes exist before starting
+pkill -9 tor || true
 
-exec /usr/bin/supervisord -c /etc/supervisord.conf
+# Start Nginx in background
+nginx -g "daemon off;" &
+NGINX_PID=$!
+
+# Start Tor (as user tor)
+su-exec tor tor -f /etc/tor/torrc &
+TOR_PID=$!
+
+# Start Decrypter (as user node)
+su-exec node node /app/decrypter.js &
+DECRYPTER_PID=$!
+
+# Handle graceful shutdown
+cleanup() {
+    echo "Stopping services..."
+    kill -TERM "$NGINX_PID" "$DECRYPTER_PID" "$TOR_PID" 2>/dev/null
+    exit 0
+}
+
+trap cleanup SIGTERM SIGINT
+
+echo "✅ All services started. Monitoring..."
+
+# Simple process monitor
+while true; do
+    if ! kill -0 "$NGINX_PID" >/dev/null 2>&1; then
+        echo "❌ Nginx exited."
+        kill -TERM "$DECRYPTER_PID" "$TOR_PID" 2>/dev/null
+        exit 1
+    fi
+    if ! kill -0 "$DECRYPTER_PID" >/dev/null 2>&1; then
+        echo "❌ Decrypter exited."
+        kill -TERM "$NGINX_PID" "$TOR_PID" 2>/dev/null
+        exit 1
+    fi
+    if ! kill -0 "$TOR_PID" >/dev/null 2>&1; then
+        echo "❌ Tor exited."
+        kill -TERM "$NGINX_PID" "$DECRYPTER_PID" 2>/dev/null
+        exit 1
+    fi
+    sleep 5
+done

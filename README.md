@@ -42,6 +42,7 @@ docker exec onion-pipe register
 | :------------- | :--------------------------------- | :----------------------------------------------- |
 | `FORWARD_DEST` | `http://host.docker.internal:8080` | Where the decrypted traffic is "piped" to.       |
 | `LISTEN_PORT`  | `80`                               | The port the client uses inside its own network. |
+| `LOG_LEVEL`    | `info`                             | Set to `debug` to see raw traffic details.       |
 
 ## 🛡️ Why use this?
 
@@ -55,6 +56,7 @@ When you use a standard relay, the relay owner can read your webhooks (GitHub to
 ## 📦 Persistence
 
 To keep the same `.onion` address across restarts, **always** mount a volume to `/var/lib/tor/hidden_service`. If this folder is lost, a new address will be generated.
+**Note:** This image is security-hardened. It runs processes as non-root users (`tor`, `nginx`, `node`). Docker volume permissions are automatically handled on startup.
 
 ## ⚖️ Legal Disclaimer
 

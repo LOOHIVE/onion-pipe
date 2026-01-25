@@ -1,23 +1,37 @@
-# Use Sapphive's official Tor image as base
-FROM sapphive/tor:latest
+# Stage 1: Build/Install Node.js dependencies
+FROM node:20-alpine AS builder
+WORKDIR /app
+RUN npm install libsodium-wrappers
+
+# Stage 2: Final Production Image
+FROM node:20-alpine
 
 USER root
-# Install Nginx, Supervisor, and tools (Debian)
-RUN apt update && \
-    apt install -y --no-install-recommends \
+
+# Install Nginx, Tor, and tools
+# Alpine uses 'apk' instead of 'apt-get'
+RUN apk add --no-cache \
     nginx \
-    supervisor \
     bash \
-    curl \
     gettext \
-    openssl && \
-    apt clean && rm -rf /var/lib/apt/lists/*
+    openssl \
+    curl \
+    su-exec \
+    ca-certificates \
+    tor && \
+    mkdir -p /run/nginx && \
+    mkdir -p /var/log/tor
+
+# Setup Decrypter (Copy from builder)
+WORKDIR /app
+COPY --from=builder /app/node_modules /app/node_modules
+COPY decrypter.js /app/decrypter.js
 
 # Setup directories
 RUN mkdir -p /var/lib/tor/hidden_service && \
-    mkdir -p /run/nginx && \
     mkdir -p /etc/nginx/templates && \
-    chown -R debian-tor:debian-tor /var/lib/tor && \
+    chown -R tor:tor /var/lib/tor && \
+    chown -R node:node /app && \
     chmod 700 /var/lib/tor/hidden_service
 
 # Generate self-signed SSL certificate for "HTTPS" requirement
@@ -37,30 +51,6 @@ RUN printf '#!/bin/bash\n/usr/local/bin/entrypoint.sh login "$@"' > /usr/local/b
     printf '#!/bin/bash\n/usr/local/bin/entrypoint.sh register "$@"' > /usr/local/bin/register && \
     printf '#!/bin/bash\n/usr/local/bin/entrypoint.sh init "$@"' > /usr/local/bin/init && \
     chmod +x /usr/local/bin/login /usr/local/bin/register /usr/local/bin/init
-
-# Setup Supervisor configuration
-RUN echo "[supervisord]" > /etc/supervisord.conf && \
-    echo "nodaemon=true" >> /etc/supervisord.conf && \
-    echo "user=root" >> /etc/supervisord.conf && \
-    echo "" >> /etc/supervisord.conf && \
-    echo "[program:nginx]" >> /etc/supervisord.conf && \
-    echo "command=nginx -g \"daemon off;\"" >> /etc/supervisord.conf && \
-    echo "autostart=true" >> /etc/supervisord.conf && \
-    echo "autorestart=true" >> /etc/supervisord.conf && \
-    echo "stdout_logfile=/dev/stdout" >> /etc/supervisord.conf && \
-    echo "stdout_logfile_maxbytes=0" >> /etc/supervisord.conf && \
-    echo "stderr_logfile=/dev/stderr" >> /etc/supervisord.conf && \
-    echo "stderr_logfile_maxbytes=0" >> /etc/supervisord.conf && \
-    echo "" >> /etc/supervisord.conf && \
-    echo "[program:tor]" >> /etc/supervisord.conf && \
-    echo "command=tor -f /etc/tor/torrc" >> /etc/supervisord.conf && \
-    echo "user=debian-tor" >> /etc/supervisord.conf && \
-    echo "autostart=true" >> /etc/supervisord.conf && \
-    echo "autorestart=true" >> /etc/supervisord.conf && \
-    echo "stdout_logfile=/dev/stdout" >> /etc/supervisord.conf && \
-    echo "stdout_logfile_maxbytes=0" >> /etc/supervisord.conf && \
-    echo "stderr_logfile=/dev/stderr" >> /etc/supervisord.conf && \
-    echo "stderr_logfile_maxbytes=0" >> /etc/supervisord.conf
 
 # Default ENV variables
 ENV FORWARD_DEST="http://host.docker.internal:8080"

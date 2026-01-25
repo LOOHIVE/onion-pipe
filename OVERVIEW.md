@@ -61,7 +61,6 @@ Note: `FORWARD_DEST` should point to the local HTTP endpoint that will receive d
 | **Security** | Public Exposure | **End-to-End X25519 Encryption** |
 
 ---
-
 ## 🎯 How It Works: The Pipeline
 1.  **The Relay (The Cloud)**: Someone sends a webhook to your relay URL (e.g., `https://relay.com/h/your-token`). The relay encrypts it instantly.
 2.  **The Bridge (The Transit)**: The encrypted data is "blindly" passed through a bridge node to the Tor network.
@@ -69,41 +68,22 @@ Note: `FORWARD_DEST` should point to the local HTTP endpoint that will receive d
 
 ---
 
-## 🛠️ Step-by-Step Setup
+## 🛠️ Management & Maintenance
 
-### Step 1: Link your Identity
-Authorize your session using our professional CLI flow:
+### Manually Trigger Registration
+If you change your environment or need to refresh your relay mapping:
 ```bash
-docker run -it --rm sapphive/onion-pipe login
-```
-*Alternatively, sign in at [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com) to manage keys manually.*
-
-### Step 2: Establish the Tunnel (Docker)
-1. **Initialize Keys**: Run once to setup your encryption identity (only if you didn't use CLI login):
-   ```bash
-   docker run --rm -v ./registration:/registration sapphive/onion-pipe init
-   ```
-
-2. **Start the Service**:
-You can use the command provided by `login` or this Docker Compose:
-```yaml
-services:
-  onion-pipe:
-    image: sapphive/onion-pipe:latest
-    environment:
-      - FORWARD_DEST=http://host.docker.internal:8080
-      - API_TOKEN=your_api_token
-    volumes:
-      - ./registration:/registration
-      - ./onion_id:/var/lib/tor/hidden_service
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: always
+docker exec onion-pipe register
 ```
 
-### Step 3: Register your Address
-The container attempts to auto-register using your `API_TOKEN` if E2EE keys are present. If you need to trigger it manually:
-
+### Rotating Encryption Keys
+To rotate your E2EE identity (recommended every 90 days):
+1. Run `init` again: 
+```bash
+docker run --rm -v ./registration:/registration sapphive/onion-pipe init
+```
+2. Restart the container.
+3. Trigger registration: 
 ```bash
 docker exec onion-pipe register
 ```

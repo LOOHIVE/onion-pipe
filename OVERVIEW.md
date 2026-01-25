@@ -105,7 +105,7 @@ services:
 The container attempts to auto-register using your `API_TOKEN` if E2EE keys are present. If you need to trigger it manually:
 
 ```bash
-docker exec -it webhook-gateway /entrypoint.sh register
+docker exec onion-pipe register
 ```
 
 ---

@@ -91,13 +91,15 @@ if [ "$1" == "register" ]; then
                 -H "Content-Type: application/json" \
                 -d "{\"onion_service_id\": \"$SERVICE_ID\", \"token\": \"$API_TOKEN\", \"public_key\": \"$PUB_KEY\"}")
             
-            if [ "$HTTP_CODE" -eq 200 ]; then
-                echo "✅ MANUAL REGISTRATION SUCCESSFUL!"
-                exit 0
-            else
-                echo "❌ REGISTRATION FAILED ($HTTP_CODE)"
-                exit 1
-            fi
+        if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ MANUAL REGISTRATION SUCCESSFUL!"
+            echo "   Public Endpoint: $RELAY_URL/v1/hook/<your-token>"
+            echo "   Check your dashboard for the exact URL."
+            exit 0
+        else
+            echo "❌ REGISTRATION FAILED ($HTTP_CODE)"
+            exit 1
+        fi
         else
             echo "❌ ERROR: Missing API_TOKEN or Public Key in /registration/ folder."
             exit 1
@@ -163,7 +165,7 @@ if [ ! -z "$API_TOKEN" ]; then
         
         if [ "$HTTP_CODE" -eq 200 ]; then
             echo "✅ SUCCESSFULLY REGISTERED with Relay!"
-            echo "   Public Webhook URL: $RELAY_URL/h/$SERVICE_ID (approximate, check dashboard)"
+            echo "   Manage your tunnel at: $RELAY_URL/dashboard"
         else
             echo "❌ REGISTRATION REJECTED ($HTTP_CODE). Ensure your API_TOKEN is valid."
         fi

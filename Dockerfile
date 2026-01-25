@@ -32,6 +32,12 @@ COPY nginx.conf.template /etc/nginx/templates/nginx.conf.template
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh && sed -i 's/\r$//' /usr/local/bin/entrypoint.sh
 
+# Create simplified CLI shortcuts
+RUN printf '#!/bin/bash\n/usr/local/bin/entrypoint.sh login "$@"' > /usr/local/bin/login && \
+    printf '#!/bin/bash\n/usr/local/bin/entrypoint.sh register "$@"' > /usr/local/bin/register && \
+    printf '#!/bin/bash\n/usr/local/bin/entrypoint.sh init "$@"' > /usr/local/bin/init && \
+    chmod +x /usr/local/bin/login /usr/local/bin/register /usr/local/bin/init
+
 # Setup Supervisor configuration
 RUN echo "[supervisord]" > /etc/supervisord.conf && \
     echo "nodaemon=true" >> /etc/supervisord.conf && \

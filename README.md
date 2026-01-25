@@ -23,10 +23,15 @@ Follow the prompts to log in via GitHub. It will provide you with the final comm
    docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" sapphive/onion-pipe
    ```
 
-### 3. Verification
+### 3. Verification & Management
 Check your logs to see your new `.onion` address:
 ```bash
 docker logs onion-pipe -f
+```
+
+If you need to manually re-register or rotate keys:
+```bash
+docker exec onion-pipe register
 ```
 
 ---

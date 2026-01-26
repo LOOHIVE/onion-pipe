@@ -49,10 +49,27 @@ const server = http.createServer(async (req, res) => {
         return res.end('Method Not Allowed');
     }
 
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
+    let chunks = [];
+    let size = 0;
+    const MAX_SIZE = 1 * 1024 * 1024; // 1MB Limit
+
+    req.on('data', chunk => { 
+        size += chunk.length;
+        if (size > MAX_SIZE) {
+            log('error', 'Payload too large, dropping connection');
+            res.statusCode = 413;
+            res.end('Payload Too Large');
+            req.destroy();
+            return;
+        }
+        chunks.push(chunk); 
+    });
+
     req.on('end', async () => {
+        if (res.writableEnded) return;
+
         try {
+            const body = Buffer.concat(chunks).toString();
             const json = JSON.parse(body);
             if (!json.payload) {
                 console.warn('[Decrypter] No payload field found. Skipping decryption.');

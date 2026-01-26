@@ -146,8 +146,13 @@ while [ ! -f /var/lib/tor/hidden_service/hostname ]; do
     fi
 done
 
-ONION_ADDR=$(cat /var/lib/tor/hidden_service/hostname)
+ONION_ADDR=$(cat /var/lib/tor/hidden_service/hostname | tr -d '\n\r')
 SERVICE_ID=${ONION_ADDR%%.onion}
+
+if [ -z "$SERVICE_ID" ]; then
+    echo "❌ ERROR: Tor hostname is empty. Registration aborted."
+    exit 1
+fi
 
 # Setup permissions for the decrypter user
 chown -R node:node /registration 2>/dev/null || true

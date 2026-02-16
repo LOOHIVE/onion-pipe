@@ -20,7 +20,7 @@ fi
 
 # --- LOGIN MODE ---
 if [ "$1" == "login" ]; then
-    RELAY_URL=${RELAY_URL:-"https://onion-pipe.sapphive.com"}
+    RELAY_URL=${RELAY_URL:-"https://onion-pipe.loohive.com"}
     echo ""
     echo "🌐 Onion-Pipe CLI Login"
     echo "------------------------"
@@ -56,12 +56,12 @@ if [ "$1" == "login" ]; then
     echo "� FINAL SETUP COMMANDS"
     echo "------------------------------------------------------"
     echo "Option A: Single-Line Command (Universal)"
-    echo "docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN=\"$API_TOKEN\" -e FORWARD_DEST=\"http://host.docker.internal:8080\" sapphive/onion-pipe"
+    echo "docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN=\"$API_TOKEN\" -e FORWARD_DEST=\"http://host.docker.internal:8080\" loohive/onion-pipe"
     echo ""
     echo "Option B: Docker Compose (Recommended)"
     echo "services:"
     echo "  onion-pipe:"
-    echo "    image: sapphive/onion-pipe"
+    echo "    image: loohive/onion-pipe"
     echo "    container_name: onion-pipe"
     echo "    restart: unless-stopped"
     echo "    volumes:"
@@ -81,7 +81,7 @@ if [ "$1" == "register" ]; then
     if [ -f "/var/lib/tor/hidden_service/hostname" ]; then
         ONION_ADDR=$(cat /var/lib/tor/hidden_service/hostname)
         SERVICE_ID=${ONION_ADDR%%.onion}
-        RELAY_URL=${RELAY_URL:-"https://onion-pipe.sapphive.com"}
+        RELAY_URL=${RELAY_URL:-"https://onion-pipe.loohive.com"}
         
         PUB_KEY_PATH="/registration/pub.key"
 
@@ -130,7 +130,7 @@ EOF
 envsubst '${FORWARD_DEST} ${LISTEN_PORT}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
 
 # Start Tor in background as tor user
-echo "🧅 Establishing Sapphive Onion-Pipe circuit..."
+echo "🧅 Establishing LOOHIVE Onion-Pipe circuit..."
 su -s /bin/bash tor -c "tor -f /etc/tor/torrc --RunAsDaemon 1"
 
 # Wait for hostname
@@ -158,7 +158,7 @@ fi
 chown -R node:node /registration 2>/dev/null || true
 
 # --- AUTOMATIC REGISTRATION ---
-RELAY_URL=${RELAY_URL:-"https://onion-pipe.sapphive.com"}
+RELAY_URL=${RELAY_URL:-"https://onion-pipe.loohive.com"}
 
 if [ ! -z "$API_TOKEN" ]; then
     echo "🔗 Registering with Relay ($RELAY_URL)..."
@@ -199,7 +199,7 @@ chown -R node:node /registration 2>/dev/null || true
 # -----------------------------
 
 echo "***************************************************"
-echo "  🚀 SAPPHIVE ONION-PIPE IS ACTIVE"
+echo "  🚀 LOOHIVE ONION-PIPE IS ACTIVE"
 if [ ! -z "$REGISTERED_TOKEN" ]; then
 echo "  🔗 PUBLIC WEBHOOK: $RELAY_URL/h/$REGISTERED_TOKEN"
 fi

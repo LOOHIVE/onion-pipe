@@ -1,13 +1,13 @@
-# <img src="https://raw.githubusercontent.com/SAPPHIVE/onion-pipe/main/src/assets/logo/logo.png" height="32"> Onion-Pipe Client (by Sapphive)
+# <img src="https://raw.githubusercontent.com/loohive/onion-pipe/main/src/assets/logo/logo.png" height="32"> Onion-Pipe Client (by LOOHIVE)
 
-**Onion-Pipe** is an open-source anonymous webhook system maintained by the Sapphive Infrastructure Team. It allows you to receive webhooks on your local machine via the Tor network without any open ports or complex firewall configurations. It is the perfect tool for developers testing multi-service webhooks in a zero-trust environment.
+**Onion-Pipe** is an open-source anonymous webhook system maintained by the LOOHIVE Infrastructure Team. It allows you to receive webhooks on your local machine via the Tor network without any open ports or complex firewall configurations. It is the perfect tool for developers testing multi-service webhooks in a zero-trust environment.
 
 ## ⚡ Quick Setup
 
 ### 1. Authorize via CLI (Professional Flow)
 Skip the website setup and authorize directly from your terminal:
 ```bash
-docker run -it --rm sapphive/onion-pipe login
+docker run -it --rm loohive/onion-pipe login
 ```
 Follow the prompts to log in via GitHub. It will provide you with the final command to start your tunnel.
 
@@ -15,12 +15,12 @@ Follow the prompts to log in via GitHub. It will provide you with the final comm
 
 1. **Initialize Keys**: Run once to generate your E2EE keypair:
    ```bash
-   docker run --rm -v ./registration:/registration sapphive/onion-pipe init
+   docker run --rm -v ./registration:/registration loohive/onion-pipe init
    ```
 
-2. **Launch the Tunnel**: Replace `YOUR_API_TOKEN` with the one from the [Dashboard](https://onion-pipe.sapphive.com):
+2. **Launch the Tunnel**: Replace `YOUR_API_TOKEN` with the one from the [Dashboard](https://onion-pipe.loohive.com):
    ```bash
-   docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" sapphive/onion-pipe
+   docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" loohive/onion-pipe
    ```
 
 ### 3. Verification & Management
@@ -60,4 +60,4 @@ To keep the same `.onion` address across restarts, **always** mount a volume to 
 
 ## ⚖️ Legal Disclaimer
 
-This is open-source software provided by SAPPHIVE. Tor is a trademark of The Tor Project, Inc. All trademarks belong to their respective owners.
+This is open-source software provided by LOOHIVE. Tor is a trademark of The Tor Project, Inc. All trademarks belong to their respective owners.

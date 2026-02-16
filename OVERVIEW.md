@@ -1,9 +1,9 @@
-# <img src="https://raw.githubusercontent.com/SAPPHIVE/onion-pipe-relay/main/src/assets/logo/logo.png" height="32"> Onion-Pipe Client (by Sapphive)
+# <img src="https://raw.githubusercontent.com/loohive/onion-pipe-relay/main/src/assets/logo/logo.png" height="32"> Onion-Pipe Client (by LOOHIVE)
 
-![Docker Pulls](https://img.shields.io/docker/pulls/sapphive/onion-pipe) ![License](https://img.shields.io/badge/license-MIT-green) ![Security](https://img.shields.io/badge/security-hardened-orange)
+![Docker Pulls](https://img.shields.io/docker/pulls/loohive/onion-pipe) ![License](https://img.shields.io/badge/license-MIT-green) ![Security](https://img.shields.io/badge/security-hardened-orange)
 
 ## 🚀 Overview
-**Onion-Pipe** is an open-source anonymous webhook system maintained by the Sapphive Infrastructure Team. It allows you to receive webhooks on your local machine via the Tor network without any open ports or complex firewall configurations. It is the perfect tool for developers testing multi-service webhooks in a zero-trust environment.
+**Onion-Pipe** is an open-source anonymous webhook system maintained by the LOOHIVE Infrastructure Team. It allows you to receive webhooks on your local machine via the Tor network without any open ports or complex firewall configurations. It is the perfect tool for developers testing multi-service webhooks in a zero-trust environment.
 
 By using the Onion-Pipe community relay network, you get a persistent, encrypted gateway that is identity-verified via GitHub.
 
@@ -14,19 +14,19 @@ By using the Onion-Pipe community relay network, you get a persistent, encrypted
 ### 1. Authorize via CLI (Recommended)
 Skip the manual tokens and authorize directly from your terminal:
 ```bash
-docker run -it --rm sapphive/onion-pipe login
+docker run -it --rm loohive/onion-pipe login
 ```
 Follow the prompts to log in via GitHub. It will provide the final command to start your tunnel.
 
 ### 2. Manual Setup (Alternative)
 First, generate your E2EE keys:
 ```bash
-docker run --rm -v ./registration:/registration sapphive/onion-pipe init
+docker run --rm -v ./registration:/registration loohive/onion-pipe init
 ```
 
 #### Option A: Single Command Deployment
 ```bash
-docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" sapphive/onion-pipe
+docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" loohive/onion-pipe
 ```
 
 ### Option B: Docker Compose Deployment
@@ -35,7 +35,7 @@ Use the following `docker-compose.yml`:
 ```yaml
 services:
   onion-pipe:
-    image: sapphive/onion-pipe:latest
+    image: loohive/onion-pipe:latest
     container_name: webhook-gateway
     environment:
       - FORWARD_DEST=http://host.docker.internal:8080  # Local endpoint
@@ -53,7 +53,7 @@ Note: `FORWARD_DEST` should point to the local HTTP endpoint that will receive d
 ---
 ## 💎 Features & Advantages
 
-| Feature | Ngrok / Alternatives | **Sapphive Onion-Pipe** |
+| Feature | Ngrok / Alternatives | **LOOHIVE Onion-Pipe** |
 | :--- | :--- | :--- |
 | **Authentication** | Shared Tokens | **Personal GitHub Identity** |
 | **Privacy** | Centralized Snooping | **Zero-Knowledge Architecture** |
@@ -80,7 +80,7 @@ docker exec onion-pipe register
 To rotate your E2EE identity (recommended every 90 days):
 1. Run `init` again: 
 ```bash
-docker run --rm -v ./registration:/registration sapphive/onion-pipe init
+docker run --rm -v ./registration:/registration loohive/onion-pipe init
 ```
 2. Restart the container.
 3. Trigger registration: 
@@ -98,12 +98,12 @@ docker exec onion-pipe register
 ---
 
 ## 🤝 Project Links
-*   **Repo:** [github.com/sapphive/onion-pipe](https://github.com/sapphive/onion-pipe)
-*   **Relay Service:** [onion-pipe.sapphive.com](https://onion-pipe.sapphive.com)
-*   **Support:** [support@sapphive.com](mailto:support@sapphive.com)
+*   **Repo:** [github.com/loohive/onion-pipe](https://github.com/loohive/onion-pipe)
+*   **Relay Service:** [onion-pipe.loohive.com](https://onion-pipe.loohive.com)
+*   **Support:** [support@loohive.com](mailto:support@loohive.com)
 
 ---
 
 ## ⚖️ Legal Disclaimer
-This is open-source software provided by SAPPHIVE. Tor is a trademark of The Tor Project, Inc. All trademarks belong to their respective owners.
+This is open-source software provided by LOOHIVE. Tor is a trademark of The Tor Project, Inc. All trademarks belong to their respective owners.
 

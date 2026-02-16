@@ -39,7 +39,7 @@ RUN mkdir -p /var/lib/tor/hidden_service && \
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /etc/nginx/server.key \
     -out /etc/nginx/server.crt \
-    -subj "/C=UN/ST=Privacy/L=Tor/O=Sapphive/CN=onion-pipe"
+    -subj "/C=UN/ST=Privacy/L=Tor/O=LOOHIVE/CN=onion-pipe"
 
 # Copy configuration templates and scripts
 COPY nginx.conf.template /etc/nginx/templates/nginx.conf.template

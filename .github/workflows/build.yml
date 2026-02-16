@@ -32,7 +32,7 @@ jobs:
           push: true
           provenance: false
           tags: |
-            sapphive/onion-pipe:latest
-            sapphive/onion-pipe:v1
+            loohive/onion-pipe:latest
+            loohive/onion-pipe:v1
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -4,7 +4,21 @@ const fs = require('fs');
 const path = require('path');
 
 const FORWARD_DEST = process.env.FORWARD_DEST || 'http://host.docker.internal:8080';
+const SERVICES_MAP = process.env.SERVICES_MAP || ""; // Format: "/api=http://api:8080,/=http://frontend:3000"
 const LISTEN_PORT = process.env.DECRYPTER_PORT || 8081;
+
+// Parse the SERVICES_MAP into an array of objects for easier matching
+const routes = SERVICES_MAP.split(',').filter(x => x.includes('=')).map(r => {
+    const [path, ...targetParts] = r.split('=');
+    return { path: path.trim(), target: targetParts.join('=').trim() };
+}).sort((a, b) => b.path.length - a.path.length); // Longest prefix match first
+
+function getTarget(requestPath) {
+    if (routes.length === 0) return FORWARD_DEST;
+    const match = routes.find(r => requestPath.startsWith(r.path));
+    return match ? match.target : FORWARD_DEST;
+}
+
 const PRIV_KEY_PATH = '/registration/priv.key';
 const PUB_KEY_PATH = '/registration/pub.key';
 
@@ -14,7 +28,7 @@ function log(level, message) {
     if (LOG_LEVEL === 'silent') return;
     if (level === 'debug' && LOG_LEVEL !== 'debug') return;
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] [${level.toUpperCase()}] ${message}`);
+    console.log(`[${timestamp}] [LOOHIVE] [${level.toUpperCase()}] ${message}`);
 }
 
 async function decrypt(sealedBoxBase64) {
@@ -73,7 +87,7 @@ const server = http.createServer(async (req, res) => {
             const json = JSON.parse(body);
             if (!json.payload) {
                 console.warn('[Decrypter] No payload field found. Skipping decryption.');
-                return forward(body, req.headers, res);
+                return forwardLegacy(body, req.headers, res);
             }
 
             const decrypted = await decrypt(json.payload);
@@ -82,14 +96,21 @@ const server = http.createServer(async (req, res) => {
                 return res.end('Decryption Failed');
             }
 
-            // Forward only the 'data' part of the decrypted envelope
+            // Sync Full Tunnel Request Handling (New Mode)
+            if (decrypted.method && decrypted.requestId) {
+                log('info', `Proxying [${decrypted.method}] ${decrypted.path || '/'} for request ${decrypted.requestId}`);
+                
+                return forwardFull(decrypted, res);
+            } 
+
+            // Legacy Webhook Handling (Old Mode)
             const payloadToForward = typeof decrypted.data === 'string' 
                 ? decrypted.data 
                 : JSON.stringify(decrypted.data);
             
-            log('debug', `Forwarding payload to ${FORWARD_DEST}`);
+            log('debug', `Forwarding payload to ${getTarget('/')}`);
             
-            forward(payloadToForward, {
+            forwardLegacy(payloadToForward, {
                 ...req.headers,
                 'content-type': typeof decrypted.data === 'object' ? 'application/json' : 'text/plain',
                 'content-length': Buffer.byteLength(payloadToForward),
@@ -104,8 +125,46 @@ const server = http.createServer(async (req, res) => {
     });
 });
 
-function forward(data, headers, clientRes) {
-    const url = new URL(FORWARD_DEST);
+async function forwardFull(ctx, clientRes) {
+    const target = getTarget(ctx.path || '/');
+    const targetUrl = new URL(ctx.path || '', target);
+    
+    const options = {
+        hostname: targetUrl.hostname,
+        port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
+        path: targetUrl.pathname + targetUrl.search,
+        method: ctx.method || 'GET',
+        headers: {
+            ...ctx.headers,
+            'host': targetUrl.host,
+            'x-onion-relay': 'true'
+        }
+    };
+
+    // Remove hop-by-hop headers
+    delete options.headers['content-length'];
+    delete options.headers['connection'];
+    delete options.headers['host'];
+
+    const proxyReq = http.request(options, (proxyRes) => {
+        clientRes.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(clientRes);
+    });
+
+    proxyReq.on('error', (err) => {
+        log('error', `Full-tunnel forwarding failed: ${err.message}`);
+        clientRes.statusCode = 502;
+        clientRes.end(JSON.stringify({ error: 'LOCAL_SERVICE_UNREACHABLE', details: err.message }));
+    });
+
+    if (ctx.body) {
+        proxyReq.write(typeof ctx.body === 'string' ? ctx.body : JSON.stringify(ctx.body));
+    }
+    proxyReq.end();
+}
+
+function forwardLegacy(data, headers, clientRes) {
+    const url = new URL(getTarget('/'));
     const options = {
         hostname: url.hostname,
         port: url.port || (url.protocol === 'https:' ? 443 : 80),
@@ -131,4 +190,5 @@ function forward(data, headers, clientRes) {
 
 server.listen(LISTEN_PORT, '0.0.0.0', () => {
     log('info', `Decrypter listening on port ${LISTEN_PORT}`);
+    if (SERVICES_MAP) log('info', `Multiplexing active with routes: ${SERVICES_MAP}`);
 });

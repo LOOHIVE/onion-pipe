@@ -224,6 +224,7 @@ su-exec tor tor -f /etc/tor/torrc &
 TOR_PID=$!
 
 # Start Decrypter (as user node)
+export TUNNEL_ID=$REGISTERED_TOKEN
 su-exec node node /app/decrypter.js &
 DECRYPTER_PID=$!
 

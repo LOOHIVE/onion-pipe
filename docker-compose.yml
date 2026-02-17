@@ -1,0 +1,37 @@
+services:
+  onion-pipe:
+    image: loohive/onion-pipe:latest
+    container_name: loohive-gateway
+    restart: unless-stopped
+    environment:
+      - API_TOKEN=${API_TOKEN}
+      - RELAY_URL=https://onion-pipe.loohive.com
+      # --- FULL TUNNEL MULTIPLEXER (Recommended) ---
+      # Route multiple services through one Onion address
+      # Format: "/prefix=http://destination:port,..."
+      - SERVICES_MAP=/api=http://api-server:3000,/web=http://frontend:80,/webhook=http://listener:8888
+      
+      # --- LEGACY FORWARDING (Optional) ---
+      # Only used if SERVICES_MAP is not defined
+      - FORWARD_DEST=http://host.docker.internal:8080
+      
+      - LOG_LEVEL=info
+    volumes:
+      - ./registration:/registration
+      - ./onion_id:/var/lib/tor/hidden_service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - loohive-net
+
+  # --- EXAMPLE SUB-SERVICES ---
+  # These are examples of services you might route to
+  api-server:
+    image: node:alpine
+    command: npx serve -p 3000
+    networks:
+      - loohive-net
+
+networks:
+  loohive-net:
+    driver: bridge

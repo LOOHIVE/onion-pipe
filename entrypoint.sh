@@ -56,7 +56,7 @@ if [ "$1" == "login" ]; then
     echo "� FINAL SETUP COMMANDS"
     echo "------------------------------------------------------"
     echo "Option A: Single-Line Command (Universal)"
-    echo "docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN=\"$API_TOKEN\" -e FORWARD_DEST=\"http://host.docker.internal:8080\" loohive/onion-pipe"
+    echo "docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN=\"$API_TOKEN\" -e SERVICES_MAP=\"/=http://host.docker.internal:8080\" loohive/onion-pipe"
     echo ""
     echo "Option B: Docker Compose (Recommended)"
     echo "services:"
@@ -69,9 +69,9 @@ if [ "$1" == "login" ]; then
     echo "      - ./onion_id:/var/lib/tor/hidden_service"
     echo "    environment:"
     echo "      API_TOKEN: \"$API_TOKEN\""
-    echo "      FORWARD_DEST: http://host.docker.internal:8080"
+    echo "      SERVICES_MAP: \"/=http://host.docker.internal:8080\""
     echo "------------------------------------------------------"
-    echo "💡 Note: Change FORWARD_DEST if your app runs on a different port or in another container."
+    echo "💡 Note: Use SERVICES_MAP to route different paths to different backend services."
     echo ""
     exit 0
 fi
@@ -205,7 +205,11 @@ echo "  🔗 PUBLIC WEBHOOK: $RELAY_URL/h/$REGISTERED_TOKEN"
 fi
 echo "  📍 PUBLIC ONION: http://$ONION_ADDR"
 echo "  🔒 SECURE ONION: https://$ONION_ADDR"
+if [ ! -z "$SERVICES_MAP" ]; then
+echo "  ➡️  MULTIPLEXER: $SERVICES_MAP"
+else
 echo "  ➡️  FORWARDING TO: $FORWARD_DEST"
+fi
 echo "***************************************************"
 
 # Ensure no orphan Tor processes exist before starting

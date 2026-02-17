@@ -18,9 +18,16 @@ Follow the prompts to log in via GitHub. It will provide you with the final comm
    docker run --rm -v ./registration:/registration loohive/onion-pipe init
    ```
 
-2. **Launch the Tunnel**: Replace `YOUR_API_TOKEN` with the one from the [Dashboard](https://onion-pipe.loohive.com):
+2. **Launch the Multiplexer**: Replace `YOUR_API_TOKEN` with the one from the [Dashboard](https://onion-pipe.loohive.com).
+   
+   **Standard (Full Tunnel):**
    ```bash
-   docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" loohive/onion-pipe
+   docker run -d --name onion-pipe \
+     -v ./registration:/registration \
+     -v ./onion_id:/var/lib/tor/hidden_service \
+     -e API_TOKEN="YOUR_API_TOKEN" \
+     -e SERVICES_MAP="/api=http://host.docker.internal:3000,/web=http://host.docker.internal:8080" \
+     loohive/onion-pipe
    ```
 
 ### 3. Verification & Management
@@ -29,20 +36,24 @@ Check your logs to see your new `.onion` address:
 docker logs onion-pipe -f
 ```
 
-If you need to manually re-register or rotate keys:
-```bash
-docker exec onion-pipe register
-```
-
 ---
 
-## ⚙️ Advanced Configuration
+## ⚙️ Advanced Configuration (Multiplexer)
 
-| Variable       | Default                            | Purpose                                          |
-| :------------- | :--------------------------------- | :----------------------------------------------- |
-| `FORWARD_DEST` | `http://host.docker.internal:8080` | Where the decrypted traffic is "piped" to.       |
-| `LISTEN_PORT`  | `80`                               | The port the client uses inside its own network. |
-| `LOG_LEVEL`    | `info`                             | Set to `debug` to see raw traffic details.       |
+Onion-Pipe now supports **Full Tunnel Multiplexing**. You can route different path prefixes to different backend services through a single Tor circuit.
+
+| Variable       | Example/Default | Purpose |
+| :--- | :--- | :--- |
+| `SERVICES_MAP` | `/api=http://api:3000,/=http://web:80` | **Multiplexer:** Map path prefixes to specific local URLs. |
+| `FORWARD_DEST` | `http://host.docker.internal:8080` | **Legacy:** Fallback destination if `SERVICES_MAP` is not set. |
+| `RELAY_URL` | `https://onion-pipe.loohive.com` | The public relay endpoint. |
+| `LOG_LEVEL` | `info` | Set to `debug` to see routing and decryption logs. |
+
+### Example Routing
+- Request to `https://relay.com/h/token/api/v1/users` → Goes to `http://api:3000/api/v1/users`
+- Request to `https://relay.com/h/token/web/index.html` → Goes to `http://web:80/web/index.html`
+
+---
 
 ## 🛡️ Why use this?
 

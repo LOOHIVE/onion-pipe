@@ -26,29 +26,36 @@ docker run --rm -v ./registration:/registration loohive/onion-pipe init
 
 #### Option A: Single Command Deployment
 ```bash
-docker run -d --name onion-pipe -v ./registration:/registration -v ./onion_id:/var/lib/tor/hidden_service -e API_TOKEN="YOUR_API_TOKEN" -e FORWARD_DEST="http://host.docker.internal:8080" loohive/onion-pipe
+docker run -d --name onion-pipe \
+  -v ./registration:/registration \
+  -v ./onion_id:/var/lib/tor/hidden_service \
+  -e API_TOKEN="YOUR_API_TOKEN" \
+  -e SERVICES_MAP="/api=http://host.docker.internal:3000,/web=http://host.docker.internal:8080" \
+  loohive/onion-pipe
 ```
 
-### Option B: Docker Compose Deployment
-Use the following `docker-compose.yml`:
+### Option B: Docker Compose Deployment (Recommended)
+Use the following `docker-compose.yml` for multiplexed routing:
 
 ```yaml
 services:
   onion-pipe:
     image: loohive/onion-pipe:latest
-    container_name: webhook-gateway
+    container_name: loohive-gateway
     environment:
-      - FORWARD_DEST=http://host.docker.internal:8080  # Local endpoint
-      - API_TOKEN=your_api_token_here                # Get from dashboard
+      - API_TOKEN=your_token_here
+      - RELAY_URL=https://onion-pipe.loohive.com
+      # Map multiple path prefixes to different backend services
+      - SERVICES_MAP=/api=http://app:3000,/web=http://ui:80
     volumes:
-      - ./registration:/registration                 # End-to-End Encryption Keys
-      - ./onion_id:/var/lib/tor/hidden_service       # Persists your .onion address
+      - ./registration:/registration
+      - ./onion_id:/var/lib/tor/hidden_service
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: always
 ```
 
-Note: `FORWARD_DEST` should point to the local HTTP endpoint that will receive decrypted webhook payloads from external webhook providers (for example: GitHub, Stripe, GitLab, PayPal). When running Docker on Windows or macOS, `host.docker.internal` maps to the host machine; if your service runs in another container, set `FORWARD_DEST` to that container's address and port.
+Note: `SERVICES_MAP` allows one .onion address to serve multiple backends. For example, a request to `/h/token/api/login` will be automatically routed to your `app` container on port 3000 at the path `/api/login`.
 
 ---
 ## 💎 Features & Advantages
@@ -59,12 +66,13 @@ Note: `FORWARD_DEST` should point to the local HTTP endpoint that will receive d
 | **Privacy** | Centralized Snooping | **Zero-Knowledge Architecture** |
 | **Persistence** | Random URLs (Free tier) | **Permanent .onion Addresses** |
 | **Security** | Public Exposure | **End-to-End X25519 Encryption** |
+| **Multi-Service** | 1 Address = 1 App | **Multiplexer (Many-to-1)** |
 
 ---
 ## 🎯 How It Works: The Pipeline
-1.  **The Relay (The Cloud)**: Someone sends a webhook to your relay URL (e.g., `https://relay.com/h/your-token`). The relay encrypts it instantly.
-2.  **The Bridge (The Transit)**: The encrypted data is "blindly" passed through a bridge node to the Tor network.
-3.  **The Client (Your Machine)**: **This container** receives that data from Tor, decrypts it using your local key, and delivers it to your application.
+1.  **The Relay (The Cloud)**: Someone sends a request to your relay URL (e.g., `https://relay.com/h/your-token/api/test`). The relay encrypts it instantly.
+2.  **The Bridge (The Transit)**: The encrypted blob is "blindly" passed through a bridge node to the Tor network.
+3.  **The Client (Your Machine)**: **This container** identifies the path (`/api/test`), decrypts it using your local private key, and forwards it synchronously to the mapped destination (`http://api:3000/api/test`).
 
 ---
 
